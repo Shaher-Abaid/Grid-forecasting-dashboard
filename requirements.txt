@@ -1,19 +1,16 @@
-# Core app and UI
+# Minimal compatible versions for smooth Streamlit deployment
 streamlit==1.35.0
 streamlit-option-menu==0.3.6
 streamlit-extras==0.3.5
 
-# Data & analysis
 pandas==2.3.0
-numpy==2.2.0
-scikit-learn==1.5.0
+numpy==1.26.4
+scikit-learn==1.4.2
+plotly==5.24.0
 joblib==1.4.2
-
-# Plotting
-plotly==5.24.1
-
-# Optimizer
-optuna==4.4.0
-
-# Other
 matplotlib==3.9.0
+
+# Optional: Only if you use these in your app
+optuna==3.6.1
+xgboost==2.0.3
+lightgbm==4.3.0
