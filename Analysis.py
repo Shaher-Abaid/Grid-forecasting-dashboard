@@ -509,19 +509,18 @@ elif selected == "⏳ Time Series Analysis":
 
                             # ---------------------- ML PREDICTIONS ---------------------- #
 elif selected == "🤖 ML Predictions":
-    
+
     import streamlit as st
     import joblib
     import pandas as pd
     import numpy as np
     import plotly.express as px
     import plotly.graph_objects as go
-    
-    # Load pipeline and models
+
     Load_predict = joblib.load("Load Pipeline.h5")
     Model2 = joblib.load("Model2.h5")
     input_columns = joblib.load("input.joblib")
-    
+
     name_mapping = {
         'Biomass_Generation': 'Biomass Generation',
         'Hydropower_Generation': 'Hydropower Generation',
@@ -535,7 +534,7 @@ elif selected == "🤖 ML Predictions":
         'Fossil_Gas_Generation': 'Fossil Gas Generation',
         'Pumped_Storage_Supply': 'Pumped Storage Supply',
         'Other_Conventional_Generation': 'Other Conventional Generation',
-        
+
         'Temperature_C': 'Temperature (°C)',
         'Dew_Point_C': 'Dew Point (°C)',
         'Relative_Humidity': 'Relative Humidity (%)',
@@ -546,12 +545,12 @@ elif selected == "🤖 ML Predictions":
         'Wind_Gust_mps': 'Wind Gust (m/s)',
         'Pressure_hPa': 'Pressure (hPa)',
         'Sunshine_Duration_min': 'Sunshine Duration (min)',
-    
+
         'Month': 'Month',
         'hour': 'hour',
         'is_weekend': 'is_weekend',
         'is_holiday': 'is_holiday',
-    
+
         'Total_generation': 'Actually total generation',
         'Total_renewable_generation': 'Total_renewable_generation',
         'month_sin': 'month_sin',
@@ -561,7 +560,7 @@ elif selected == "🤖 ML Predictions":
         'Load': 'Load',
         "Weather_Group": "Weather Group"
     }
-    
+
     def encode_time_features(month: int, hour: int):
         month_rad = 2 * np.pi * (month - 1) / 12
         hour_rad = 2 * np.pi * hour / 24
@@ -571,80 +570,81 @@ elif selected == "🤖 ML Predictions":
             "hour_sin": np.sin(hour_rad),
             "hour_cos": np.cos(hour_rad),
         }
-    
+
     def predction(**safe_inputs):
         original_inputs = {name_mapping.get(k, k): v for k, v in safe_inputs.items()}
         month = original_inputs.pop("Month")
         hour = original_inputs.pop("hour")
         original_inputs.update(encode_time_features(month, hour))
-    
+
         renewable_sources = [
             'Biomass Generation', 'Hydropower Generation', 'Wind Offshore Generation',
             'Wind Onshore Generation', 'Solar PV Generation', 'Other Renewable Generation'
         ]
         original_inputs['Total_renewable_generation'] = sum(original_inputs[i] for i in renewable_sources)
-    
+
         all_sources = renewable_sources + [
             'Nuclear Generation', 'Lignite Generation', 'Hard Coal Generation',
             'Fossil Gas Generation', 'Pumped Storage Supply', 'Other Conventional Generation'
         ]
         original_inputs['Actually total generation'] = sum(original_inputs[i] for i in all_sources)
-    
+
         ordered_data = [original_inputs[col] for col in input_columns if col not in ['Month', 'hour']]
         test_df = pd.DataFrame([ordered_data], columns=[col for col in input_columns if col not in ['Month', 'hour']])
-    
+
         prediction = Load_predict.predict(test_df)[0]
         test_df["Load"] = prediction
-    
+
         percent = round((original_inputs['Total_renewable_generation'] / prediction) * 100, 2)
         prediction2 = Model2.predict(test_df)[0]
         renewable_status = "HIGH (≥ 50%)" if prediction2 == 1 else "LOW (< 50%)"
-    
+
         return prediction, percent, renewable_status
-    
-    
-    # Streamlit UI
-    
+
     st.title("Energy Load and Renewable Share Forecast")
-    
-    with st.sidebar:
-        st.header("Input Data")
-    
-        st.subheader("Energy Generation (MW)")
-        biomass = st.number_input("Biomass Generation", min_value=0.0)
-        hydro = st.number_input("Hydropower Generation", min_value=0.0)
-        wind_offshore = st.number_input("Wind Offshore Generation", min_value=0.0)
-        wind_onshore = st.number_input("Wind Onshore Generation", min_value=0.0)
-        solar_pv = st.number_input("Solar PV Generation", min_value=0.0)
-        other_renew = st.number_input("Other Renewable Generation", min_value=0.0)
-        nuclear = st.number_input("Nuclear Generation", min_value=0.0)
-        lignite = st.number_input("Lignite Generation", min_value=0.0)
-        hard_coal = st.number_input("Hard Coal Generation", min_value=0.0)
-        fossil_gas = st.number_input("Fossil Gas Generation", min_value=0.0)
-        pumped_storage = st.number_input("Pumped Storage Supply", min_value=0.0)
-        other_conventional = st.number_input("Other Conventional Generation", min_value=0.0)
-    
-        st.subheader("Weather Conditions")
-        temperature = st.slider("Temperature (°C)", -30.0, 45.0, 15.0)
-        dew_point = st.slider("Dew Point (°C)", -30.0, 30.0, 10.0)
-        humidity = st.slider("Relative Humidity (%)", 0, 100, 50)
-        precip = st.slider("Precipitation (mm)", 0.0, 100.0, 1.0)
-        snow = st.slider("Snow Depth (mm)", 0.0, 500.0, 0.0)
-        wind_dir = st.slider("Wind Direction (°)", 0, 360, 180)
-        wind_speed = st.slider("Wind Speed (m/s)", 0.0, 40.0, 5.0)
-        wind_gust = st.slider("Wind Gust (m/s)", 0.0, 60.0, 10.0)
-        pressure = st.slider("Pressure (hPa)", 950.0, 1050.0, 1013.0)
-        sunshine = st.slider("Sunshine Duration (min)", 0, 720, 300)
-    
-        st.subheader("Temporal Features")
-        month = st.selectbox("Month", list(range(1, 13)))
-        hour = st.selectbox("Hour", list(range(0, 24)))
-        is_weekend = st.checkbox("Weekend?")
-        is_holiday = st.checkbox("Holiday?")
-    
-        st.subheader("Weather Group")
-        weather_group = st.selectbox("Weather Group", ['Cloudy', 'Rain', 'Snow', 'Clear', 'Storm', 'Extreme'])
-    
+
+    with st.expander("Input Panel", expanded=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            biomass = st.number_input("Biomass Generation", min_value=0.0)
+            hydro = st.number_input("Hydropower Generation", min_value=0.0)
+            wind_offshore = st.number_input("Wind Offshore Generation", min_value=0.0)
+            wind_onshore = st.number_input("Wind Onshore Generation", min_value=0.0)
+        with col2:
+            solar_pv = st.number_input("Solar PV Generation", min_value=0.0)
+            other_renew = st.number_input("Other Renewable Generation", min_value=0.0)
+            nuclear = st.number_input("Nuclear Generation", min_value=0.0)
+            lignite = st.number_input("Lignite Generation", min_value=0.0)
+        with col3:
+            hard_coal = st.number_input("Hard Coal Generation", min_value=0.0)
+            fossil_gas = st.number_input("Fossil Gas Generation", min_value=0.0)
+            pumped_storage = st.number_input("Pumped Storage Supply", min_value=0.0)
+            other_conventional = st.number_input("Other Conventional Generation", min_value=0.0)
+
+        col4, col5, col6 = st.columns(3)
+        with col4:
+            temperature = st.slider("Temperature (°C)", -30.0, 45.0, 15.0)
+            dew_point = st.slider("Dew Point (°C)", -30.0, 30.0, 10.0)
+            humidity = st.slider("Relative Humidity (%)", 0, 100, 50)
+        with col5:
+            precip = st.slider("Precipitation (mm)", 0.0, 100.0, 1.0)
+            snow = st.slider("Snow Depth (mm)", 0.0, 500.0, 0.0)
+            wind_dir = st.slider("Wind Direction (°)", 0, 360, 180)
+        with col6:
+            wind_speed = st.slider("Wind Speed (m/s)", 0.0, 40.0, 5.0)
+            wind_gust = st.slider("Wind Gust (m/s)", 0.0, 60.0, 10.0)
+            pressure = st.slider("Pressure (hPa)", 950.0, 1050.0, 1013.0)
+            sunshine = st.slider("Sunshine Duration (min)", 0, 720, 300)
+
+        col7, col8 = st.columns(2)
+        with col7:
+            month = st.selectbox("Month", list(range(1, 13)))
+            hour = st.selectbox("Hour", list(range(0, 24)))
+        with col8:
+            is_weekend = st.checkbox("Weekend?")
+            is_holiday = st.checkbox("Holiday?")
+            weather_group = st.selectbox("Weather Group", ['Cloudy', 'Rain', 'Snow', 'Clear', 'Storm', 'Extreme'])
+
     if st.button("Predict"):
         with st.spinner("Calculating predictions..."):
             prediction, percent, renewable_status = predction(
@@ -676,10 +676,10 @@ elif selected == "🤖 ML Predictions":
                 is_holiday=int(is_holiday),
                 Weather_Group=weather_group,
             )
-    
+
             hour_str = f"{hour:02d}:00"
             col1, col2 = st.columns(2)
-    
+
             with col1:
                 st.subheader("Load Estimation (MW)")
                 fig_Load = go.Figure(go.Indicator(
@@ -697,7 +697,7 @@ elif selected == "🤖 ML Predictions":
                     }
                 ))
                 st.plotly_chart(fig_Load, use_container_width=True)
-    
+
             with col2:
                 st.subheader("Renewable Share")
                 fig_Renewable = px.pie(
@@ -708,8 +708,9 @@ elif selected == "🤖 ML Predictions":
                 )
                 fig_Renewable.update_traces(textinfo="percent+label")
                 st.plotly_chart(fig_Renewable, use_container_width=True)
-    
+
             st.markdown("### Summary")
             st.info(f"At **{hour_str}**, the predicted load is **{round(prediction, 2)} MW**, "
                     f"with a renewable contribution of **{percent}%** → **{renewable_status}**.")
+
 
