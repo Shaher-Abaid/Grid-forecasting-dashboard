@@ -1,3 +1,4 @@
+%%writefile Analysis.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -434,6 +435,7 @@ elif selected == "🌐 Multivariate":
 
     # Class correlation (with High_Renewable_Share)
     st.subheader("📈 Feature Correlation with Renewable Dominance")
+    df['High_Renewable_Share'] = df['High_Renewable_Share'].astype(int)
     numeric_df = df.select_dtypes(include='number')
     class_corr = numeric_df.corr()['High_Renewable_Share'].drop('High_Renewable_Share') * 100
     class_corr = class_corr.sort_values(ascending=True).reset_index()
