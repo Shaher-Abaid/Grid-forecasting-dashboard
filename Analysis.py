@@ -1,3 +1,4 @@
+%%writefile Analysis.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -390,7 +391,29 @@ elif selected == "🔗 Bivariate":
     with col2:
         y = st.selectbox("Y Axis", num_cols, index=1)
 
-    fig = px.scatter(df_filtered, x=x, y=y, trendline="ols", title=f"{x} vs {y}")
+    fig = px.scatter(
+        df_filtered,
+        x=x,
+        y=y,
+        trendline="ols",
+        title=f"{x} vs {y}",
+        opacity=0.7,
+    )
+
+    fig.update_traces(marker=dict(size=8, line=dict(width=1, color='DarkSlateGrey')))
+
+    for trace in fig.data:
+        if trace.mode == "lines":
+            trace.line.color = "red"
+
+    fig.update_layout(
+        title_font=dict(size=20),
+        xaxis_title=x,
+        yaxis_title=y,
+        height=600,
+        margin=dict(l=40, r=40, t=60, b=40),
+    )
+
     st.plotly_chart(fig, use_container_width=True)
 
     corr = df_filtered[x].corr(df_filtered[y])
@@ -398,6 +421,7 @@ elif selected == "🔗 Bivariate":
 
     if "Grid Load incl. Hydro" in [x, y]:
         st.warning("\u26a0\ufe0f 'Total Grid Load incl. Hydro' includes part of the target load — this may cause misleading correlation!")
+
 
                             # ---------------------- MULTIVARIATE ---------------------- #
 elif selected == "🌐 Multivariate":
@@ -704,7 +728,7 @@ elif selected == "🤖 ML Predictions":
                     values=[percent, 100 - percent],
                     names=["Renewables", "Others"],
                     hole=0.6,
-                    color_discrete_sequence=["green", "gray"]
+                    color_discrete_sequence=["red", "green"]
                 )
                 fig_Renewable.update_traces(textinfo="percent+label")
                 st.plotly_chart(fig_Renewable, use_container_width=True)
@@ -712,5 +736,4 @@ elif selected == "🤖 ML Predictions":
             st.markdown("### Summary")
             st.info(f"At **{hour_str}**, the predicted load is **{round(prediction, 2)} MW**, "
                     f"with a renewable contribution of **{percent}%** → **{renewable_status}**.")
-
 
